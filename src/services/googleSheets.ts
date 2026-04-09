@@ -1,4 +1,11 @@
+import { config } from "dotenv";
 import { google } from "googleapis";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+config({ path: join(__dirname, "../../.env.local") });
 
 const spreadsheets = new Map([
   ["Instruction Scheduler", "1TKA8M9LQciU_NjYczRDpWzhBAYeVFEPPSvhs3UBY4tg"],
@@ -6,8 +13,15 @@ const spreadsheets = new Map([
 
 type SpreadsheetName = Parameters<typeof spreadsheets.get>[0];
 
+const credentials = JSON.parse(
+  process.env.GOOGLE_CREDENTIALS ??
+    (() => {
+      throw new Error("GOOGLE_CREDENTIALS is not set");
+    })(),
+);
+
 const auth = new google.auth.GoogleAuth({
-  keyFile: "service-account.json",
+  credentials,
   scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
 });
 
@@ -47,19 +61,20 @@ export async function fetchStudentList(status: string): Promise<string> {
   const timeColNum = headers.indexOf("Time");
   const statusColNum = headers.indexOf("Status");
 
+  const filteredData = data.filter(
+    (row, i) =>
+      i > 0 && row[studentNameColNum] !== "" && row[statusColNum] === status,
+  );
   const studentList =
-    `**Today's ${status} Students**\n` +
-    data
-      .filter(
+    `**${status} Students**\n` +
+    filteredData
+      .map(
         (row, i) =>
-          i > 0 &&
-          row[studentNameColNum] !== "" &&
-          row[statusColNum] === status,
-      )
-      .map((row) =>
-        [row[studentNameColNum], `(*${row[timeColNum]}*)`].join(" "),
+          `${i + 1}. ${[row[studentNameColNum], `*(${row[timeColNum]})*`].join(" ")}`,
       )
       .join("\n");
 
-  return studentList || `No ${status.toLowerCase()} students today!`;
+  return filteredData.length > 0
+    ? studentList
+    : `No ${status.toLowerCase()} students today!`;
 }

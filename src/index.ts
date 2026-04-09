@@ -1,5 +1,3 @@
-#!/usr/bin/env tsx
-
 import { config } from "dotenv";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
@@ -16,7 +14,7 @@ discordClient.once("clientReady", async () => {
     console.error("No user found in client.");
     return;
   }
-  console.log(`Logged in as ${discordClient.user.tag}`);
+  console.log(`Logged into Discord as ${discordClient.user.tag}`);
 
   // Mon–Thu at 7:45 PM
   cron.schedule(
@@ -42,3 +40,7 @@ discordClient.once("clientReady", async () => {
     },
   );
 });
+
+// (async () => {
+//   // do something.
+// })();
