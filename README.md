@@ -1,4 +1,4 @@
-# Mathnasium EOD Report Bot
+# MCHP Bot
 
 A Node.js + TypeScript bot that automates end-of-day student session reporting for a Mathnasium learning center. It pulls data from Google Sheets and the Radius CRM, then posts a formatted summary to a Discord channel on a scheduled basis.
 
