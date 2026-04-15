@@ -40,7 +40,3 @@ discordClient.once("clientReady", async () => {
     },
   );
 });
-
-// (async () => {
-//   // do something.
-// })();
