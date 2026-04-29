@@ -22,7 +22,7 @@ const credentials = JSON.parse(
 
 const auth = new google.auth.GoogleAuth({
   credentials,
-  scopes: ["https://www.googleapis.com/auth/spreadsheets.readonly"],
+  scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 
 export async function getSpreadsheetData(
@@ -42,6 +42,26 @@ export async function getSpreadsheetData(
     throw new Error("No data found in the specified range.");
   }
   return res.data.values;
+}
+
+export async function writeSpreadsheetData(
+  spreadsheetName: SpreadsheetName,
+  range: string,
+  values: string[][],
+): Promise<void> {
+  const sheets = google.sheets({ version: "v4", auth });
+  const spreadsheetId = spreadsheets.get(spreadsheetName);
+  if (!spreadsheetId) {
+    throw new Error(`Spreadsheet with name "${spreadsheetName}" not found.`);
+  }
+  await sheets.spreadsheets.values.update({
+    spreadsheetId,
+    range,
+    valueInputOption: "USER_ENTERED", // or "RAW"
+    requestBody: {
+      values,
+    },
+  });
 }
 
 export async function fetchStudentList(status: string): Promise<string> {

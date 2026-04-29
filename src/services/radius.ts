@@ -2,7 +2,7 @@ import { config } from "dotenv";
 import { dirname, join } from "path";
 import type { Page } from "puppeteer";
 import { fileURLToPath } from "url";
-import { launchPuppeteer } from "./puppeteer.js";
+import { launchPuppeteer, pressKeyNTimes } from "./puppeteer.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -61,4 +61,46 @@ export async function fetchCheckedInStudents(): Promise<string> {
   await browser.close();
   // await console.log(studentList);
   return studentList;
+}
+
+export async function fetchEnrolledStudents() {
+  const { browser, page } = await launchPuppeteer();
+  await logIntoRadius(page);
+  // await console.log("Fetching enrolled students...");
+  await page.goto("https://radius.mathnasium.com/Student");
+
+  await pressKeyNTimes(page, "Tab", 2);
+  await page.keyboard.type("Enrolled", { delay: 100 });
+  await page.keyboard.press("Enter");
+  await page.waitForSelector("tr.k-master-row");
+
+  const clicksPerRow = 3;
+  await pressKeyNTimes(page, "Tab", 100 * clicksPerRow + 19);
+
+  await page.keyboard.press("Tab");
+  await page.keyboard.press("Space");
+  await pressKeyNTimes(page, "ArrowDown", 3);
+  await page.keyboard.press("Enter");
+  await page.waitForFunction(
+    () => document.querySelectorAll("tr.k-master-row").length > 100,
+  );
+
+  const enrolledStudents = await page
+    .$$eval("tr.k-master-row", (rows) => {
+      return rows.map((row) => {
+        const cells = Array.from(row.cells);
+        return cells.map((cell) => cell.innerText);
+      });
+    })
+    .then(
+      (students) =>
+        students
+          .map((row) => [row[0], row[1]].join(" ").trim()) // First and last name
+          .sort() // Sort alphabetically by full name
+          .filter((name) => name !== "") // Filter out empty names
+          .map((name) => [name]), // Wrap each name in an array to match the expected format for Google Sheets
+    );
+
+  await browser.close();
+  return enrolledStudents;
 }
