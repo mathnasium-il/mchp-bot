@@ -5,6 +5,7 @@ import cron from "node-cron";
 import { discordClient, sendEODStudentReport } from "./services/discord.js";
 import { fetchEnrolledStudents } from "./services/radius.js";
 import { writeSpreadsheetData } from "./services/googleSheets.js";
+import { isHolidayOrClosure } from "./utils.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -17,6 +18,11 @@ discordClient.once("clientReady", async () => {
     return;
   }
   console.log(`Logged into Discord as ${discordClient.user.tag}`);
+
+  if (isHolidayOrClosure()) {
+    console.log("Skipping daily report due to center closure.");
+    return;
+  }
 
   // Mon–Thu at 7:45 PM
   cron.schedule(
