@@ -24,9 +24,9 @@ discordClient.once("clientReady", async () => {
     return;
   }
 
-  // Mon–Thu at 7:45 PM
+  // Mon–Thu at 7:15 PM
   cron.schedule(
-    "45 19 * * 1-4",
+    "15 19 * * 1-4",
     async () => {
       console.log("Running daily report!");
       await sendEODStudentReport();
@@ -37,7 +37,7 @@ discordClient.once("clientReady", async () => {
   );
 
   // Sun at 5:15 PM
-  cron.schedule(
+  /* cron.schedule(
     "15 17 * * 0",
     async () => {
       console.log("Running daily report!");
@@ -46,7 +46,7 @@ discordClient.once("clientReady", async () => {
     {
       timezone: "America/Chicago",
     },
-  );
+  ); */
 
   // Sun-Thu at 7:00 AM
   cron.schedule(

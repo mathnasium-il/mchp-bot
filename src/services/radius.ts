@@ -75,15 +75,27 @@ export async function fetchEnrolledStudents() {
   await page.waitForSelector("tr.k-master-row");
 
   const clicksPerRow = 3;
-  await pressKeyNTimes(page, "Tab", 100 * clicksPerRow + 19);
-
-  await page.keyboard.press("Tab");
-  await page.keyboard.press("Space");
-  await pressKeyNTimes(page, "ArrowDown", 3);
-  await page.keyboard.press("Enter");
-  await page.waitForFunction(
-    () => document.querySelectorAll("tr.k-master-row").length > 100,
+  const studentCountText = await page.$$eval(
+    "span.k-pager-info.k-label",
+    (spans) => spans.at(-1)?.textContent?.trim() ?? "",
   );
+  const studentCount = parseInt(studentCountText.split(" of ")[1] ?? "100"); // "1 - 84 of 84" -> 84
+
+  if (studentCount > 100) {
+    await pressKeyNTimes(
+      page,
+      "Tab",
+      Math.min(studentCount, 100) * clicksPerRow + 19,
+    );
+
+    await page.keyboard.press("Tab");
+    await page.keyboard.press("Space");
+    await pressKeyNTimes(page, "ArrowDown", 3);
+    await page.keyboard.press("Enter");
+    await page.waitForFunction(
+      () => document.querySelectorAll("tr.k-master-row").length > 100,
+    );
+  }
 
   const enrolledStudents = await page
     .$$eval("tr.k-master-row", (rows) => {
@@ -102,5 +114,6 @@ export async function fetchEnrolledStudents() {
     );
 
   await browser.close();
+  // console.log(enrolledStudents);
   return enrolledStudents;
 }
