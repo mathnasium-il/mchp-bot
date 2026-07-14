@@ -30,7 +30,7 @@ async function logIntoRadius(page: Page) {
   await console.log(`Logged into Radius as ${username}`);
 }
 
-export async function fetchCheckedInStudents(): Promise<string> {
+export async function getCheckedInStudents(): Promise<string> {
   const { browser, page } = await launchPuppeteer();
   await logIntoRadius(page);
   await console.log("Fetching checked-in students...");
@@ -63,7 +63,7 @@ export async function fetchCheckedInStudents(): Promise<string> {
   return studentList;
 }
 
-export async function fetchEnrolledStudents() {
+export async function getEnrolledStudents() {
   const { browser, page } = await launchPuppeteer();
   await logIntoRadius(page);
   // await console.log("Fetching enrolled students...");

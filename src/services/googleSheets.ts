@@ -54,6 +54,14 @@ export async function writeSpreadsheetData(
   if (!spreadsheetId) {
     throw new Error(`Spreadsheet with name "${spreadsheetName}" not found.`);
   }
+
+  // Clear the existing contents
+  await sheets.spreadsheets.values.clear({
+    spreadsheetId,
+    range,
+  });
+
+  // Write the new values
   await sheets.spreadsheets.values.update({
     spreadsheetId,
     range,
@@ -64,7 +72,7 @@ export async function writeSpreadsheetData(
   });
 }
 
-export async function fetchStudentList(status: string): Promise<string> {
+export async function getStudentList(status: string): Promise<string> {
   const data = await getSpreadsheetData(
     "Instruction Scheduler",
     "Admin View!O2:AB77",
