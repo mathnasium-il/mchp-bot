@@ -2,7 +2,7 @@ import { config } from "dotenv";
 import cron from "node-cron";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
-import { getStudentAppointments } from "./services/daySmart.js";
+import { getStudentAppointments } from "./services/daysmart.js";
 import { discordClient, sendEODStudentReport } from "./services/discord.js";
 import { writeSpreadsheetData } from "./services/googleSheets.js";
 import { getEnrolledStudents } from "./services/radius.js";
