@@ -235,7 +235,7 @@ export async function sendReconciliationReport() {
     }
 
     const message =
-      "Hello team! Please review this list before conducting any sessions today.\n * **Action Required:** If a student on this list arrives, do not start their session.\n * **Next Steps:** Immediately and __discreetly__ notify an admin team member to handle the check-in, and have the family wait at the front.\n * **Discretion:** Ensure a smooth, private experience for our families, and please avoid discussing any account details aloud in the instruction zones or near other students.\n\n";
+      "Hello team! Please review this list before conducting any sessions today.\n * **Action Required:** If a student on this list arrives, do not start their session.\n * **Next Steps:** Immediately and __discreetly__ notify an admin team member to handle the check-in, and have the student wait at the front.\n * **Discretion:** Ensure a smooth, private experience for our families, and please avoid discussing any account details aloud in the instruction zones or near other students.\n\n";
     const studentsList = [...allStudents]
       .sort()
       .map((student, i) => `${i + 1}. ${student}`);
