@@ -9,7 +9,7 @@ A Node.js + TypeScript bot that automates end-of-day student session reporting f
 - **Scheduled reporting** — automatically runs on weekday evenings (Mon–Thu at 7:45 PM) and Sundays (5:15 PM), Chicago time
 - **Google Sheets integration** — reads student session statuses (Last-Minute, Cancelled, No Show) from the Instruction Scheduler spreadsheet
 - **Radius CRM scraping** — uses Puppeteer to log into the Radius attendance roster and detect students who are still checked in
-- **Discord delivery** — posts a formatted EOD report to a designated Discord channel
+- **Discord delivery** — posts a formatted reports to designated Discord channels
 
 ---
 
@@ -36,7 +36,7 @@ src/
     ├── discord.ts        # Report assembly and Discord message delivery
     ├── googleSheets.ts   # Google Sheets API client and data fetching
     ├── puppeteer.ts      # Puppeteer browser/page setup utilities
-    └── radius.ts         # Radius CRM login and attendance scraping
+    └── radius.ts         # Radius CRM login and report scraping
 ```
 
 ---
@@ -102,10 +102,10 @@ npx tsx src/index.ts
 
 Two cron jobs are registered after the Discord client is ready:
 
-| Schedule   | Days              |
-| ---------- | ----------------- |
-| 7:45 PM CT | Monday – Thursday |
-| 5:15 PM CT | Sunday            |
+| Schedule   | Days                           |
+| ---------- | ------------------------------ |
+| 7:15 PM CT | Monday – Thursday              |
+| 5:15 PM CT | Sunday (schoolyear hours only) |
 
 Both jobs call `sendEODStudentReport()`.
 

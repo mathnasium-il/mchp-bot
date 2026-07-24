@@ -3,7 +3,11 @@ import cron from "node-cron";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import { getStudentAppointments } from "./services/daysmart.js";
-import { discordClient, sendEODStudentReport } from "./services/discord.js";
+import {
+  discordClient,
+  sendEODStudentReport,
+  sendReconciliationReport,
+} from "./services/discord.js";
 import { writeSpreadsheetData } from "./services/googleSheets.js";
 import { getEnrolledStudents } from "./services/radius.js";
 import { isHolidayOrClosure } from "./utils.js";
@@ -32,9 +36,7 @@ discordClient.once("clientReady", async () => {
       console.log("Running daily report...");
       await sendEODStudentReport();
     },
-    {
-      timezone: "America/Chicago",
-    },
+    { timezone: "America/Chicago" },
   );
 
   // Sun at 5:15 PM
@@ -44,16 +46,13 @@ discordClient.once("clientReady", async () => {
       console.log("Running daily report!");
       await sendEODStudentReport();
     },
-    {
-      timezone: "America/Chicago",
-    },
+    { timezone: "America/Chicago" },
   ); */
 
   // Sun-Thu at 7:00 AM - Fetch enrolled students
   cron.schedule(
     "0 7 * * 0-4",
     async () => {
-      console.log("Fetching enrolled students list...");
       const enrolledStudents = await getEnrolledStudents();
       await writeSpreadsheetData(
         "Instruction Scheduler",
@@ -61,16 +60,13 @@ discordClient.once("clientReady", async () => {
         enrolledStudents,
       );
     },
-    {
-      timezone: "America/Chicago",
-    },
+    { timezone: "America/Chicago" },
   );
 
   // Sun-Thu at 7:00 AM - Fetch student appointments
   cron.schedule(
     "0 7 * * 0-4",
     async () => {
-      console.log("Fetching student appointments...");
       const appointments = await getStudentAppointments();
       await writeSpreadsheetData(
         "Instruction Scheduler",
@@ -81,5 +77,14 @@ discordClient.once("clientReady", async () => {
     {
       timezone: "America/Chicago",
     },
+  );
+
+  // Mon-Thu at 11:00 AM - Fetch student appointments
+  cron.schedule(
+    "0 7 * * 1-4",
+    async () => {
+      await sendReconciliationReport();
+    },
+    { timezone: "America/Chicago" },
   );
 });

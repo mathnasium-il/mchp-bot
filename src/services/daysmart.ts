@@ -98,8 +98,9 @@ export async function getStudentAppointments() {
     "Calendar (screen name)",
     "Appointment Status",
   ];
-
   const date = formatInTimeZone(new Date(), "America/Chicago", "yyyyMMdd");
+
+  console.log("Gathering student appointments...");
 
   const request = await daySmartClient.request({
     method: "POST",

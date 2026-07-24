@@ -33,7 +33,7 @@ async function logIntoRadius(page: Page) {
 export async function getCheckedInStudents(): Promise<string> {
   const { browser, page } = await launchPuppeteer();
   await logIntoRadius(page);
-  await console.log("Fetching checked-in students...");
+  await console.log("Searching checked-in students...");
   await page.goto("https://radius.mathnasium.com/Attendance/Roster");
   await page.waitForSelector("tr.k-master-row");
   await page.click("#btnsearch");
@@ -66,7 +66,7 @@ export async function getCheckedInStudents(): Promise<string> {
 export async function getEnrolledStudents() {
   const { browser, page } = await launchPuppeteer();
   await logIntoRadius(page);
-  // await console.log("Fetching enrolled students...");
+  await console.log("Searching enrolled students...");
   await page.goto("https://radius.mathnasium.com/Student");
 
   await pressKeyNTimes(page, "Tab", 2);
@@ -114,6 +114,81 @@ export async function getEnrolledStudents() {
     );
 
   await browser.close();
-  // console.log(enrolledStudents);
+  console.log(
+    `${enrolledStudents.length - 1} ${enrolledStudents.length - 1 === 1 ? "student" : "students"} found.`,
+  );
   return enrolledStudents;
+}
+
+export async function getPayments() {
+  const { browser, page } = await launchPuppeteer();
+  await logIntoRadius(page);
+  await console.log("Gathering payment information...");
+  await page.goto("https://radius.mathnasium.com/Payment");
+
+  const currYear = new Date().getFullYear();
+
+  await pressKeyNTimes(page, "Tab", 10);
+  await page.keyboard.type(`01/01/${currYear}`, { delay: 100 });
+  await page.keyboard.press("Enter");
+  await page.waitForSelector("tr.k-master-row");
+
+  const payments = await page
+    .$$eval("tr.k-master-row", (rows) => {
+      return rows.map((row) => {
+        const cells = Array.from(row.cells);
+        return cells.map((cell) => cell.innerText);
+      });
+    })
+    .then((payments) =>
+      payments
+        .map((row) => {
+          const rawAmtExpected = row[15] ?? "0";
+          const rawAmtPaid = row[16] ?? "0";
+
+          // Check for parentheses, strip them, and add a minus sign if found
+          const normalizedAmtExpected = /^\(.*\)$/.test(rawAmtExpected)
+            ? `-${rawAmtExpected.replace(/[()]/g, "")}`
+            : rawAmtExpected;
+          const normalizedAmtPaid = /^\(.*\)$/.test(rawAmtPaid)
+            ? `-${rawAmtPaid.replace(/[()]/g, "")}`
+            : rawAmtPaid;
+
+          return [
+            row[2], // Account status
+            row[3]?.split(", ").reverse().join(" "), // Account name
+            row[5]?.split("\n").filter((str) => str !== ""), // Student name(s)
+            row[9], // Payment status
+            new Date(row[10] ?? ""), // Billing date
+            parseFloat(normalizedAmtExpected.replace(/[^0-9.-]/g, "")), // Amount expected
+            parseFloat(normalizedAmtPaid.replace(/[^0-9.-]/g, "")), // Amount paid
+          ];
+        })
+        .filter(
+          (row) =>
+            row[3] !== "Unpaid" &&
+            row[3] !== "Paid in Full" &&
+            row[3] !== "Failed Then Paid In Full" &&
+            row[3] !== "Payment Pending",
+        ) // Filter out paid and future invoices
+        .sort((a, b) => {
+          const timeA =
+            a[4] instanceof Date && !isNaN(a[4].getTime()) ? a[4].getTime() : 0;
+          const timeB =
+            b[4] instanceof Date && !isNaN(b[4].getTime()) ? b[4].getTime() : 0;
+
+          return timeA - timeB;
+        }),
+    );
+
+  const totalExpected = payments.reduce((total, row) => {
+    const amtExpected = row[5] as number; //
+    return total + amtExpected;
+  }, 0);
+
+  await browser.close();
+  console.log(
+    `${payments.length - 1} ${payments.length - 1 === 1 ? "payment" : "payments"} found.`,
+  );
+  return { payments, totalExpected };
 }
