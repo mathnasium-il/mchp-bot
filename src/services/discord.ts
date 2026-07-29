@@ -228,8 +228,9 @@ export async function sendReconciliationReport() {
     for (const payment of payments) {
       const accountStatus = payment[0] as string;
       const students = payment[2] as string[];
+      const amtExpected = payment[5] as number;
 
-      if (accountStatus === "Active") {
+      if (accountStatus === "Active" && amtExpected >= 0) {
         students.forEach((student) => allStudents.add(student));
       }
     }
