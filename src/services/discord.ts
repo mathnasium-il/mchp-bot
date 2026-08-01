@@ -1,7 +1,6 @@
 import { formatInTimeZone } from "date-fns-tz";
 import { Client, GatewayIntentBits } from "discord.js";
 import { getStudentList } from "./googleSheets.js";
-import { getCheckedInStudents, getPayments } from "./radius.js";
 
 const discordChannels = new Map([
   ["admin-team", "1476779118006763703"],
@@ -24,7 +23,8 @@ async function fetchChannel(channelName: DiscordChannelName) {
   return await discordClient.channels.fetch(discordChannels.get(channelName)!);
 }
 
-export async function sendEODStudentReport() {
+export async function sendEODStudentReport(checkedInStudents: string) {
+  console.log("Running daily report...");
   const channel = await fetchChannel("lead-team");
 
   // Check if the channel exists AND is a text-based channel
@@ -43,7 +43,6 @@ export async function sendEODStudentReport() {
   const lastMinuteStudents = await getStudentList("Last-Minute");
   const cancelledStudents = await getStudentList("Cancelled");
   const noShowStudents = await getStudentList("No Show");
-  const checkedInStudents = await getCheckedInStudents();
 
   await channel.send(
     `# 📋 EOD Report - ${formatInTimeZone(today, timezone, "eee, MMM d")}\n-# Below is an auto-generated student sessions report for today (${formatInTimeZone(today, timezone, "MM/dd/yyyy")}). [Click here](https://docs.google.com/spreadsheets/d/1TKA8M9LQciU_NjYczRDpWzhBAYeVFEPPSvhs3UBY4tg/edit?gid=0#gid=0) to navigate to the Instruction Scheduler. For any questions or concerns, please reach out to the admin team.\n\n` +
@@ -56,7 +55,10 @@ export async function sendEODStudentReport() {
   );
 }
 
-export async function sendReconciliationReport() {
+export async function sendReconciliationReport(
+  payments: (string | number | string[] | Date | undefined)[][],
+  totalExpected: number,
+) {
   const adminTeamChannel = await fetchChannel("admin-team");
   const leadTeamChannel = await fetchChannel("lead-team");
 
@@ -80,8 +82,6 @@ export async function sendReconciliationReport() {
 
   const today = new Date();
   const timezone = "America/Chicago";
-
-  const { payments, totalExpected } = await getPayments();
 
   const dollarFormatter = new Intl.NumberFormat("en-US", {
     style: "currency",

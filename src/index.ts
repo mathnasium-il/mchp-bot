@@ -9,7 +9,7 @@ import {
   sendReconciliationReport,
 } from "./services/discord.js";
 import { writeSpreadsheetData } from "./services/googleSheets.js";
-import { getEnrolledStudents } from "./services/radius.js";
+import { handleRadiusOperations } from "./services/radius.js";
 import { isHolidayOrClosure } from "./utils.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -29,17 +29,44 @@ discordClient.once("clientReady", async () => {
     return;
   }
 
-  // Mon–Thu at 7:15 PM - Run daily report
+  // Sun-Thu at 9:00 AM
+  // BOD Operations - Fetch student appointments, enrolled students, and payment issues.
+  cron.schedule(
+    "0 9 * * 0-4",
+    async () => {
+      const appointments = await getStudentAppointments();
+      await writeSpreadsheetData(
+        "Instruction Scheduler",
+        "DaySmart!B2:G",
+        appointments,
+      );
+
+      const { enrolledStudents, payments, totalExpected } =
+        await handleRadiusOperations();
+      await writeSpreadsheetData(
+        "Instruction Scheduler",
+        "Radius Students - HELPER!A:A",
+        enrolledStudents,
+      );
+
+      await sendReconciliationReport(payments, totalExpected);
+    },
+    { timezone: "America/Chicago" },
+  );
+
+  // Mon–Thu at 7:15 PM
+  // EOD Operations - Run daily report
   cron.schedule(
     "15 19 * * 1-4",
     async () => {
-      console.log("Running daily report...");
-      await sendEODStudentReport();
+      const { checkedInStudents } = await handleRadiusOperations();
+      await sendEODStudentReport(checkedInStudents);
     },
     { timezone: "America/Chicago" },
   );
 
   // Sun at 5:15 PM
+  // EOD Operations - Run daily report
   /* cron.schedule(
     "15 17 * * 0",
     async () => {
@@ -48,43 +75,4 @@ discordClient.once("clientReady", async () => {
     },
     { timezone: "America/Chicago" },
   ); */
-
-  // Sun-Thu at 7:00 AM - Fetch enrolled students
-  cron.schedule(
-    "0 7 * * 0-4",
-    async () => {
-      const enrolledStudents = await getEnrolledStudents();
-      await writeSpreadsheetData(
-        "Instruction Scheduler",
-        "Radius Students - HELPER!A:A",
-        enrolledStudents,
-      );
-    },
-    { timezone: "America/Chicago" },
-  );
-
-  // Sun-Thu at 7:00 AM - Fetch student appointments
-  cron.schedule(
-    "0 7 * * 0-4",
-    async () => {
-      const appointments = await getStudentAppointments();
-      await writeSpreadsheetData(
-        "Instruction Scheduler",
-        "DaySmart!B2:G",
-        appointments,
-      );
-    },
-    {
-      timezone: "America/Chicago",
-    },
-  );
-
-  // Mon-Thu at 11:00 AM - Fetch student appointments
-  cron.schedule(
-    "0 7 * * 1-4",
-    async () => {
-      await sendReconciliationReport();
-    },
-    { timezone: "America/Chicago" },
-  );
 });

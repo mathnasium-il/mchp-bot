@@ -30,9 +30,18 @@ async function logIntoRadius(page: Page) {
   await console.log(`Logged into Radius as ${username}`);
 }
 
-export async function getCheckedInStudents(): Promise<string> {
+export async function handleRadiusOperations() {
   const { browser, page } = await launchPuppeteer();
   await logIntoRadius(page);
+  const checkedInStudents = await getCheckedInStudents(page);
+  const enrolledStudents = await getEnrolledStudents(page);
+  const { payments, totalExpected } = await getPayments(page);
+  await browser.close();
+
+  return { checkedInStudents, enrolledStudents, payments, totalExpected };
+}
+
+export async function getCheckedInStudents(page: Page): Promise<string> {
   await console.log("Searching checked-in students...");
   await page.goto("https://radius.mathnasium.com/Attendance/Roster");
   await page.waitForSelector("tr.k-master-row");
@@ -58,14 +67,11 @@ export async function getCheckedInStudents(): Promise<string> {
         checkedInStudents.join("\n")
       : "All students have been checked out in Radius!";
 
-  await browser.close();
   // await console.log(studentList);
   return studentList;
 }
 
-export async function getEnrolledStudents() {
-  const { browser, page } = await launchPuppeteer();
-  await logIntoRadius(page);
+export async function getEnrolledStudents(page: Page) {
   await console.log("Searching enrolled students...");
   await page.goto("https://radius.mathnasium.com/Student");
 
@@ -113,16 +119,13 @@ export async function getEnrolledStudents() {
           .map((name) => [name]), // Wrap each name in an array to match the expected format for Google Sheets
     );
 
-  await browser.close();
   console.log(
     `${enrolledStudents.length - 1} ${enrolledStudents.length - 1 === 1 ? "student" : "students"} found.`,
   );
   return enrolledStudents;
 }
 
-export async function getPayments() {
-  const { browser, page } = await launchPuppeteer();
-  await logIntoRadius(page);
+export async function getPayments(page: Page) {
   await console.log("Gathering payment information...");
   await page.goto("https://radius.mathnasium.com/Payment");
 
@@ -186,7 +189,6 @@ export async function getPayments() {
     return total + amtExpected;
   }, 0);
 
-  await browser.close();
   console.log(
     `${payments.length - 1} ${payments.length - 1 === 1 ? "payment" : "payments"} found.`,
   );
