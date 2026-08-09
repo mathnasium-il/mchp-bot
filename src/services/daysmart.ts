@@ -92,28 +92,58 @@ interface DaySmartAppointment {
 export async function getStudentAppointments() {
   const header = [
     "Child",
+    "Appointment Date",
     "Duration",
     "Start Time",
     "Service",
     "Calendar (screen name)",
     "Appointment Status",
   ];
-  const date = formatInTimeZone(new Date(), "America/Chicago", "yyyyMMdd");
+
+  const now = new Date();
+  const startOfMonthObj = new Date(now.getTime());
+  startOfMonthObj.setDate(1);
+  const endOfNextMonthObj = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+
+  const start_date = formatInTimeZone(
+    startOfMonthObj,
+    "America/Chicago",
+    "yyyyMMdd",
+  );
+  const end_date = formatInTimeZone(
+    endOfNextMonthObj,
+    "America/Chicago",
+    "yyyyMMdd",
+  );
 
   console.log("Gathering student appointments...");
 
   const request = await daySmartClient.request({
     method: "POST",
     url: "/Appointments/GetAppointments",
-    params: { date },
+    params: { start_date, end_date },
   });
 
   const response = request.data;
   const appointments = (await response.data) as DaySmartAppointment[];
 
   if (appointments.length === 0) {
-    console.log("No scheduled session today.");
+    console.log("No scheduled sessions in this time range.");
     return [header];
+  } else
+    await console.log(
+      appointments.length,
+      appointments.length === 1 ? "appointment found." : "appointments found.",
+    );
+
+  function formatDate(dateStr: string) {
+    if (!dateStr || dateStr.length !== 8) return "Invalid Date";
+
+    const year = dateStr.slice(0, 4);
+    const month = dateStr.slice(4, 6);
+    const day = dateStr.slice(6, 8);
+
+    return `${month}/${day}/${year}`;
   }
 
   function formatDuration(start: number, end: number): string {
@@ -149,6 +179,7 @@ export async function getStudentAppointments() {
     for (const appointment of appointments) {
       const {
         customer_id,
+        date,
         pet_id,
         start_time,
         end_time,
@@ -171,6 +202,7 @@ export async function getStudentAppointments() {
 
       const formattedAppointment = [
         `${child.first_name} ${child.last_name}`.trim(),
+        formatDate(date),
         formatDuration(start_time, end_time),
         formatTime(start_time),
         service,
@@ -184,9 +216,9 @@ export async function getStudentAppointments() {
     return result;
   }
 
-  const formattedAppointments = await formatAppointments(appointments);
+  const result = await formatAppointments(appointments);
   console.log(
-    `${formattedAppointments.length - 1} ${formattedAppointments.length - 1 === 1 ? "appointment" : "appointments"} found and formatted.`,
+    `${result.length - 1} ${result.length - 1 === 1 ? "appointment" : "appointments"} successfully formatted.`,
   );
-  return formattedAppointments;
+  return result;
 }

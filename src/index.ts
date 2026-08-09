@@ -11,6 +11,7 @@ import {
 import { writeSpreadsheetData } from "./services/googleSheets.js";
 import { handleRadiusOperations } from "./services/radius.js";
 import { isHolidayOrClosure } from "./utils.js";
+import { formatInTimeZone } from "date-fns-tz";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -34,11 +35,44 @@ discordClient.once("clientReady", async () => {
   cron.schedule(
     "0 9 * * 0-4",
     async () => {
-      const appointments = await getStudentAppointments();
+      const allAppointments = await getStudentAppointments();
+      const dailyAppointments = allAppointments
+        .filter(
+          (appointment, i) =>
+            i === 0 ||
+            appointment[1] ===
+              formatInTimeZone(new Date(), "America/Chicago", "MM/dd/yyyy"),
+        )
+        .map((appointment) => {
+          const childName = appointment[0] as string;
+          const duration = appointment[2] as string;
+          const time = appointment[3] as string;
+          const service = appointment[4] as string;
+          const calendar = appointment[5] as string;
+          const status = appointment[6] as string;
+
+          const result: string[] = [
+            childName,
+            duration,
+            time,
+            service,
+            calendar,
+            status,
+          ];
+
+          return result;
+        });
+
+      await writeSpreadsheetData(
+        "Instruction Scheduler",
+        "'DaySmart (All Data)'!B2:H",
+        allAppointments,
+      );
+
       await writeSpreadsheetData(
         "Instruction Scheduler",
         "DaySmart!B2:G",
-        appointments,
+        dailyAppointments,
       );
 
       const { enrolledStudents, payments, totalExpected } =
@@ -75,4 +109,9 @@ discordClient.once("clientReady", async () => {
     },
     { timezone: "America/Chicago" },
   ); */
+
+  // Testing only
+  // (async () => {
+  //   // Insert code here.
+  // })();
 });
