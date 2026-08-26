@@ -1,3 +1,4 @@
+import { formatInTimeZone } from "date-fns-tz";
 import { config } from "dotenv";
 import cron from "node-cron";
 import { dirname, join } from "path";
@@ -11,7 +12,6 @@ import {
 import { writeSpreadsheetData } from "./services/googleSheets.js";
 import { handleRadiusOperations } from "./services/radius.js";
 import { isHolidayOrClosure } from "./utils.js";
-import { formatInTimeZone } from "date-fns-tz";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -101,14 +101,14 @@ discordClient.once("clientReady", async () => {
 
   // Sun at 5:15 PM
   // EOD Operations - Run daily report
-  /* cron.schedule(
+  cron.schedule(
     "15 17 * * 0",
     async () => {
-      console.log("Running daily report!");
-      await sendEODStudentReport();
+      const { checkedInStudents } = await handleRadiusOperations();
+      await sendEODStudentReport(checkedInStudents);
     },
     { timezone: "America/Chicago" },
-  ); */
+  );
 
   // Testing only
   // (async () => {

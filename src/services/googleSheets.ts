@@ -2,6 +2,7 @@ import { config } from "dotenv";
 import { google } from "googleapis";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
+import { sendErrorNotification } from "./discord.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -56,20 +57,35 @@ export async function writeSpreadsheetData(
   }
 
   // Clear the existing contents
-  await sheets.spreadsheets.values.clear({
-    spreadsheetId,
-    range,
-  });
+  await sheets.spreadsheets.values
+    .clear({
+      spreadsheetId,
+      range,
+    })
+    .then(() => {
+      console.log(`${spreadsheetName} - ${range}: Range successfully cleared.`);
+    })
+    .catch((err) => {
+      console.error(err);
+    });
 
   // Write the new values
-  await sheets.spreadsheets.values.update({
-    spreadsheetId,
-    range,
-    valueInputOption: "USER_ENTERED", // or "RAW"
-    requestBody: {
-      values,
-    },
-  });
+  await sheets.spreadsheets.values
+    .update({
+      spreadsheetId,
+      range,
+      valueInputOption: "USER_ENTERED", // or "RAW"
+      requestBody: {
+        values,
+      },
+    })
+    .then(() => {
+      console.log(`${spreadsheetName} - ${range}: Range successfully updated.`);
+    })
+    .catch((err) => {
+      console.error(err);
+      sendErrorNotification(err);
+    });
 }
 
 export async function getStudentList(status: string): Promise<string> {

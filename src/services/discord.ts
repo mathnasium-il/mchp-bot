@@ -267,3 +267,25 @@ export async function sendReconciliationReport(
     console.log("All payments have been reconciled in Radius!");
   }
 }
+
+export async function sendErrorNotification(message: string) {
+  const adminTeamChannel = await fetchChannel("admin-team");
+
+  // Check if the channels exists AND are text-based channels
+  if (!adminTeamChannel) {
+    console.error("Admin team channel not found.");
+    return;
+  }
+  if (!adminTeamChannel.isTextBased() || !("send" in adminTeamChannel)) {
+    console.error("Admin team channel cannot send messages.");
+    return;
+  }
+
+  const today = new Date();
+  const timezone = "America/Chicago";
+
+  await adminTeamChannel.send(
+    `**⚠️ Automation Error Notification - ${formatInTimeZone(today, timezone, "eee, MMM d")}**\n\n` +
+      message,
+  );
+}
