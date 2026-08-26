@@ -88,10 +88,10 @@ discordClient.once("clientReady", async () => {
     { timezone: "America/Chicago" },
   );
 
-  // Mon–Thu at 7:15 PM
+  // Mon–Thu at 7:45 PM
   // EOD Operations - Run daily report
   cron.schedule(
-    "15 19 * * 1-4",
+    "45 19 * * 1-4",
     async () => {
       const { checkedInStudents } = await handleRadiusOperations();
       await sendEODStudentReport(checkedInStudents);
