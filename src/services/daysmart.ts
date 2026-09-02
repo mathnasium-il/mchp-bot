@@ -101,17 +101,20 @@ export async function getStudentAppointments() {
   ];
 
   const now = new Date();
-  const startOfMonthObj = new Date(now.getTime());
-  startOfMonthObj.setDate(1);
-  const endOfNextMonthObj = new Date(now.getFullYear(), now.getMonth() + 2, 0);
+  const startOfMonth = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() - 7,
+  );
+  const endOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 2, 0);
 
   const start_date = formatInTimeZone(
-    startOfMonthObj,
+    startOfMonth,
     "America/Chicago",
     "yyyyMMdd",
   );
   const end_date = formatInTimeZone(
-    endOfNextMonthObj,
+    endOfNextMonth,
     "America/Chicago",
     "yyyyMMdd",
   );
